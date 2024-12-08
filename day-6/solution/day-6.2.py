@@ -1,56 +1,43 @@
-import re
 import os
-
+import sys
+sys.setrecursionlimit(10**6)
 my_path = os.path.abspath(os.path.dirname(__file__))
-path = os.path.join(my_path, "../inputs/input_1.txt")
+path = os.path.join(my_path, "../inputs/input_2.txt")
+obst = 0 #obstacles that create loops
+direction = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 with open(path, 'r') as f:
     lines = f.readlines()
-    direction = {
-        '^': (0, (-1, 0)),
-        '>': (1, (0, 1)),
-        'V': (2, (1, 0)),
-        '<': (3, (0, -1)),
-    }
-
-    matrix = []
-    for l in lines:
-        mini_line = []
-        l = l.strip()
-        for ch in l:
-            mini_line.append(ch)
-        matrix.append(mini_line)
+    matrix = [[ch for ch in l.strip()] for l in lines]
     mark_i, mark_j = 0, 0
-    total = 0
-    for i in range(len(matrix) - 1):
-        try:
-            mark_i = i
-            mark_j = matrix[i].index('^')
-            break
-        except:
-            pass
-    try:
-        while True:
-            current = matrix[mark_i][mark_j]
-            go_next = matrix[mark_i+direction[current]
-                             [-1][0]][mark_j+direction[current][-1][1]]
-            if go_next != "#":
-                go_next = current
-                matrix[mark_i][mark_j] = 'X'
-                mark_i, mark_j = mark_i + \
-                    direction[current][-1][0], mark_j+direction[current][-1][1]
-                matrix[mark_i][mark_j] = current
-            else:
-                if direction[current][0]+1 != 4:
-                    value = [i for i in direction
-                             if direction[i][0] == direction[current][0]+1][0]
-                    matrix[mark_i][mark_j] = value
-
+    for i, row in enumerate(matrix):
+        for j, char in enumerate(row):
+            if char == '^':
+                mark_i, mark_j = i, j
+    
+    for x in range(len(matrix)):
+        for y in range(len(matrix[x])):
+            if matrix[x][y] != '.':
+                continue
+            matrix[x][y] = '#'
+            mi, mj = mark_i, mark_j
+            visited = set()
+            cd = 0
+            while True:
+                if (cd, mi, mj) in visited:
+                    obst += 1
+                    break
+                visited.add((cd, mi, mj))
+                next_i = mi + direction[cd][0]
+                next_j = mj + direction[cd][1]
+                if not (0 <= next_i < len(matrix) and 0 <= next_j < len(matrix[0])): #out of bounds
+                    break
+                if matrix[next_i][next_j] == '#' or (next_i == x and next_j == y): #transform if bounds or #
+                    cd = (cd + 1) % 4
                 else:
-                    matrix[mark_i][mark_j] = '^'
-    except IndexError:
-        for m in matrix:
-            for el in m:
-                if el == 'X':
-                    total += 1
-        print(total+1)
+                    mi, mj = next_i, next_j
+            # for m in matrix:
+            #     print(*m, sep='')
+            # print('-'*50)
+            matrix[x][y] = '.'
+print('obst:', obst)
